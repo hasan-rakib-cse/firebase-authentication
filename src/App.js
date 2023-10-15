@@ -3,7 +3,7 @@ import './App.css';
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
 import firebaseConfig from './firebase.config';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword } from "firebase/auth";
 
 
 firebase.initializeApp(firebaseConfig)
@@ -15,7 +15,9 @@ function App() {
     name: '',
     email: '',
     password: '',
-    photo: ''
+    photo: '',
+    error: '',
+    success: false
   })
 
   const auth = getAuth();
@@ -81,7 +83,20 @@ function App() {
   const handleSubmit = (event) => {
     event.preventDefault();
     if(user.email && user.password) {
-      console.log('submitting')
+      createUserWithEmailAndPassword(auth, user.email, user.password)
+      .then((res) => {
+        const newUserInfo = {...user};
+        newUserInfo.error = '';
+        newUserInfo.success = true;
+        setUser(newUserInfo);
+        console.log(res);
+      })
+      .catch((error) => {
+        const newUserInfo = {...user};
+        newUserInfo.error = error.message;
+        newUserInfo.success = false;
+        setUser(newUserInfo);
+      });
     }
 
   }
@@ -100,6 +115,7 @@ function App() {
       }
 
       <h1>Our Own Authentication</h1>
+
       <form action="" onSubmit={handleSubmit}>
         <input type="text" onBlur={handleBlur} name='name' placeholder='Enter Your Name' />
         <br />
@@ -109,6 +125,10 @@ function App() {
         <br/>
         <input type="submit" value="Submit" />
       </form>
+
+      <p style={{color: 'red'}}>{user.error}</p>
+      {user.success && <p style={{color: 'green'}}>User created Successfully.</p>}
+       
     </div>
   );
 }
