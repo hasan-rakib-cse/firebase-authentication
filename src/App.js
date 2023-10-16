@@ -3,12 +3,14 @@ import './App.css';
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
 import firebaseConfig from './firebase.config';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 
 
 firebase.initializeApp(firebaseConfig)
 
 function App() {
+
+  const [newUser, setNewUser] = useState(false);
 
   const [user, setUser] = useState({
     isSignedIn: false,
@@ -23,6 +25,7 @@ function App() {
   const auth = getAuth();
   const provider = new GoogleAuthProvider();
 
+  // Sign In with Google
   const handleSignIn = () => {
     signInWithPopup(auth, provider)
     .then((result) => {
@@ -49,6 +52,7 @@ function App() {
     });
   }
 
+  // Sign Out with Google
   const handleSignOut = () => {
     signOut(auth).then((res) => {
       const signedOutUser = {
@@ -63,6 +67,7 @@ function App() {
     });
   }
 
+  // Save email & password in state
   const handleBlur = (e) => {
     let isFieldValid = true;
     if(e.target.name === 'email') {
@@ -80,9 +85,12 @@ function App() {
     }
   }
 
+  // Submit form
   const handleSubmit = (event) => {
     event.preventDefault();
-    if(user.email && user.password) {
+
+    // Sign Up code
+    if(newUser && user.email && user.password) {
       createUserWithEmailAndPassword(auth, user.email, user.password)
       .then((res) => {
         const newUserInfo = {...user};
@@ -90,6 +98,26 @@ function App() {
         newUserInfo.success = true;
         setUser(newUserInfo);
         console.log(res);
+      })
+      .catch((error) => {
+        const newUserInfo = {...user};
+        newUserInfo.error = error.message;
+        newUserInfo.success = false;
+        setUser(newUserInfo);
+      });
+    }
+
+    // Sign In Code
+    if(!newUser && user.email && user.password) {
+      signInWithEmailAndPassword(auth, user.email, user.password)
+      .then((userCredential) => {
+        // Signed in 
+        // const user = userCredential.user;
+        const newUserInfo = {...user};
+        newUserInfo.error = '';
+        newUserInfo.success = true;
+        setUser(newUserInfo);
+        // ...
       })
       .catch((error) => {
         const newUserInfo = {...user};
@@ -115,9 +143,11 @@ function App() {
       }
 
       <h1>Our Own Authentication</h1>
+      <input type="checkbox" onChange={() => setNewUser(!newUser)} name="newUser" id="newUser" />
+      <label htmlFor="newUser">New User Sign Up</label>
 
       <form action="" onSubmit={handleSubmit}>
-        <input type="text" onBlur={handleBlur} name='name' placeholder='Enter Your Name' />
+        {newUser && <input type="text" onBlur={handleBlur} name='name' placeholder='Enter Your Name' />}
         <br />
         <input type="type" onBlur={handleBlur} name='email' placeholder='Your Email Address' required />
         <br/>
@@ -127,7 +157,7 @@ function App() {
       </form>
 
       <p style={{color: 'red'}}>{user.error}</p>
-      {user.success && <p style={{color: 'green'}}>User created Successfully.</p>}
+      {user.success && <p style={{color: 'green'}}>User {newUser ? 'created' : 'Logged In'} Successfully.</p>}
        
     </div>
   );
