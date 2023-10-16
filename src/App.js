@@ -3,7 +3,7 @@ import './App.css';
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
 import firebaseConfig from './firebase.config';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile  } from "firebase/auth";
 
 
 firebase.initializeApp(firebaseConfig)
@@ -97,7 +97,7 @@ function App() {
         newUserInfo.error = '';
         newUserInfo.success = true;
         setUser(newUserInfo);
-        console.log(res);
+        updateUserName(user.name)
       })
       .catch((error) => {
         const newUserInfo = {...user};
@@ -110,14 +110,14 @@ function App() {
     // Sign In Code
     if(!newUser && user.email && user.password) {
       signInWithEmailAndPassword(auth, user.email, user.password)
-      .then((userCredential) => {
+      .then((res) => {
         // Signed in 
         // const user = userCredential.user;
         const newUserInfo = {...user};
         newUserInfo.error = '';
         newUserInfo.success = true;
         setUser(newUserInfo);
-        // ...
+        console.log('sign In User Info', res.user);
       })
       .catch((error) => {
         const newUserInfo = {...user};
@@ -127,6 +127,17 @@ function App() {
       });
     }
 
+  }
+
+  // Update a user's profile
+  const updateUserName = (name) => {
+    updateProfile(auth.currentUser, {
+      displayName: name
+    }).then(() => {
+      console.log('user name updated successfully')
+    }).catch((error) => {
+      console.log(error)
+    });
   }
 
   return (
@@ -153,7 +164,7 @@ function App() {
         <br/>
         <input type="password" onBlur={handleBlur} name="password" placeholder='Your Password' required />
         <br/>
-        <input type="submit" value="Submit" />
+        <input type="submit" value={newUser ? 'Sign Up' : 'Sign In'} />
       </form>
 
       <p style={{color: 'red'}}>{user.error}</p>
