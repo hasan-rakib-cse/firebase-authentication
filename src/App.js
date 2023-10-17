@@ -3,12 +3,16 @@ import './App.css';
 import * as firebase from 'firebase/app'
 import 'firebase/auth'
 import firebaseConfig from './firebase.config';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile  } from "firebase/auth";
+import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, updateProfile, FacebookAuthProvider } from "firebase/auth";
 
 
 firebase.initializeApp(firebaseConfig)
 
 function App() {
+
+  const auth = getAuth();
+  const googleProvider = new GoogleAuthProvider();
+  const facebookProvider = new FacebookAuthProvider();
 
   const [newUser, setNewUser] = useState(false);
 
@@ -22,12 +26,9 @@ function App() {
     success: false
   })
 
-  const auth = getAuth();
-  const provider = new GoogleAuthProvider();
-
   // Sign In with Google
   const handleSignIn = () => {
-    signInWithPopup(auth, provider)
+    signInWithPopup(auth, googleProvider)
     .then((result) => {
 
       // This gives you a Google Access Token. You can use it to access the Google API.
@@ -89,7 +90,7 @@ function App() {
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    // Sign Up code
+    // Sign Up with Email & Password
     if(newUser && user.email && user.password) {
       createUserWithEmailAndPassword(auth, user.email, user.password)
       .then((res) => {
@@ -107,7 +108,7 @@ function App() {
       });
     }
 
-    // Sign In Code
+    // Sign In with Email & Password
     if(!newUser && user.email && user.password) {
       signInWithEmailAndPassword(auth, user.email, user.password)
       .then((res) => {
@@ -129,7 +130,7 @@ function App() {
 
   }
 
-  // Update a user's profile
+  // Update a user's profile with Email & Password
   const updateUserName = (name) => {
     updateProfile(auth.currentUser, {
       displayName: name
@@ -140,10 +141,36 @@ function App() {
     });
   }
 
+  // Sign In with Facebook
+  const handleFbSignIn = () => {
+    signInWithPopup(auth, facebookProvider)
+    .then((result) => {
+      const user = result.user;
+      console.log('FB user after sign-in', user)
+
+      // This gives you a Facebook Access Token. You can use it to access the Facebook API.
+      // const credential = FacebookAuthProvider.credentialFromResult(result);
+      // const accessToken = credential.accessToken;
+    })
+    .catch((error) => {
+
+      const errorCode = error.code;
+      const errorMessage = error.message;
+      const email = error.customData.email;
+      const credential = FacebookAuthProvider.credentialFromError(error);
+      console.log(errorCode)
+      console.log(errorMessage)
+      console.log(email)
+      console.log(credential)
+    });
+  }
+
   return (
     <div className="App">
 
       { user.isSignedIn ? <button onClick={handleSignOut}>Sign Out</button> : <button onClick={handleSignIn}>Sign In</button> }
+      <br />
+      <button onClick={handleFbSignIn}>Sign In With Facebook</button>
 
       {
         user.isSignedIn && <div>
